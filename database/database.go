@@ -26,7 +26,12 @@ func Connect() {
 
 	err = DB.AutoMigrate(&models.Book{})
 	if err != nil {
-		log.Fatalf("Failed to migrate database: %v", err)
+		log.Fatalf("Failed to migrate book database: %v", err)
+	}
+
+	err = DB.AutoMigrate(&models.User{})
+	if err != nil {
+		log.Fatalf("Failed to migrate user database: %v", err)
 	}
 
 	fmt.Println("Database connection established and model migrated.")

@@ -1,0 +1,9 @@
+the following command lets you enter the docker containter 
+`docker exec -it <container_name> bash`
+
+connect to the postgres instance 
+
+`psql -U bookstore -d bookstore_db`
+
+SELECT * FORM books;
+

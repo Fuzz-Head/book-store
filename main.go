@@ -8,11 +8,18 @@ import (
 	"github.com/Fuzz-Head/routes"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	// Load .env
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found")
+	}
 
 	database.Connect()
+
+	database.SeedBooks()
 
 	// Register custom ISBN validator
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {

@@ -11,11 +11,26 @@ func SetupRouter() *gin.Engine {
 
 	r.Use(middleware.InjectClaims())
 
-	r.GET("/books", middleware.ScopeRequired("can:read:books"), handlers.GetBooks)
-	r.GET("/book/:id", middleware.ScopeRequired("can:read:books"), handlers.GetBook)
-	r.POST("/book", middleware.ScopeRequired("can:create:books"), handlers.CreateBook)
-	r.PUT("/book/:id", middleware.ScopeRequired("can:update:books"), handlers.UpdateBook)
-	r.DELETE("/book/:id", middleware.ScopeRequired("can:delete:books"), handlers.DeleteBook)
+	// r.GET("/books", middleware.ScopeRequired("can:read:books"), handlers.GetBooks)
+	// r.GET("/book/:id", middleware.ScopeRequired("can:read:books"), handlers.GetBook)
+	// r.POST("/book", middleware.ScopeRequired("can:create:books"), handlers.CreateBook)
+	// r.PUT("/book/:id", middleware.ScopeRequired("can:update:books"), handlers.UpdateBook)
+	// r.DELETE("/book/:id", middleware.ScopeRequired("can:delete:books"), handlers.DeleteBook)
+
+	// login and register
+	r.POST("/register", handlers.Register)
+	r.POST("/login", handlers.Login)
+
+	// JWT protected routes
+	auth := r.Group("/")
+	auth.Use(middleware.JWTAuthMiddleware())
+	{
+		auth.GET("/books", middleware.ScopeRequired("can:read:books"), handlers.GetBooks)
+		auth.GET("/book/:id", middleware.ScopeRequired("can:read:books"), handlers.GetBook)
+		auth.POST("/book", middleware.ScopeRequired("can:create:books"), handlers.CreateBook)
+		auth.PUT("/book/:id", middleware.ScopeRequired("can:update:books"), handlers.UpdateBook)
+		auth.DELETE("/book/:id", middleware.ScopeRequired("can:delete:books"), handlers.DeleteBook)
+	}
 
 	return r
 }
