@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/Fuzz-Head/models"
+	"github.com/Fuzz-Head/domain/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"

@@ -1,0 +1,238 @@
+go test ./... -v
+?   	github.com/Fuzz-Head/cmd/server	[no test files]
+?   	github.com/Fuzz-Head/database	[no test files]
+?   	github.com/Fuzz-Head/domain/models	[no test files]
+=== RUN   TestHashPassword
+--- PASS: TestHashPassword (2.29s)
+=== RUN   TestProtectedRoutes
+2025/07/08 09:59:16 test-key-secret
+
+
+2025/07/08 09:59:16 [Recovery] 2025/07/08 - 09:59:16 panic recovered:
+runtime error: invalid memory address or nil pointer dereference
+/home/linuxbrew/.linuxbrew/Cellar/go/1.24.4/libexec/src/runtime/panic.go:262 (0x47a698)
+	panicmem: panic(memoryError)
+/home/linuxbrew/.linuxbrew/Cellar/go/1.24.4/libexec/src/runtime/signal_unix.go:925 (0x47a668)
+	sigpanic: panicmem()
+/home/fuzzhead/go/pkg/mod/gorm.io/gorm@v1.30.0/gorm.go:426 (0x6d1012)
+	(*DB).getInstance: if db.clone > 0 {
+/home/fuzzhead/go/pkg/mod/gorm.io/gorm@v1.30.0/finisher_api.go:165 (0x6cf275)
+	(*DB).Find: tx = db.getInstance()
+/home/fuzzhead/code/go/some-api/internal/api/handlers/book_handler.go:37 (0x78c98c)
+	GetBooks: if err := database.DB.Find(&books).Error; err != nil {
+/home/fuzzhead/go/pkg/mod/github.com/gin-gonic/gin@v1.10.1/context.go:185 (0x7647aa)
+	(*Context).Next: c.handlers[c.index](c)
+/home/fuzzhead/code/go/some-api/internal/api/middleware/auth_middleware.go:52 (0x78f498)
+	setupTestRouter.JWTAuthMiddleware.func1: c.Next()
+/home/fuzzhead/go/pkg/mod/github.com/gin-gonic/gin@v1.10.1/context.go:185 (0x7699ae)
+	(*Context).Next: c.handlers[c.index](c)
+/home/fuzzhead/go/pkg/mod/github.com/gin-gonic/gin@v1.10.1/recovery.go:102 (0x76999b)
+	CustomRecoveryWithWriter.func1: c.Next()
+/home/fuzzhead/go/pkg/mod/github.com/gin-gonic/gin@v1.10.1/context.go:185 (0x768ae4)
+	(*Context).Next: c.handlers[c.index](c)
+/home/fuzzhead/go/pkg/mod/github.com/gin-gonic/gin@v1.10.1/logger.go:249 (0x768acb)
+	LoggerWithConfig.func1: c.Next()
+/home/fuzzhead/go/pkg/mod/github.com/gin-gonic/gin@v1.10.1/context.go:185 (0x767ef1)
+	(*Context).Next: c.handlers[c.index](c)
+/home/fuzzhead/go/pkg/mod/github.com/gin-gonic/gin@v1.10.1/gin.go:644 (0x767980)
+	(*Engine).handleHTTPRequest: c.Next()
+/home/fuzzhead/go/pkg/mod/github.com/gin-gonic/gin@v1.10.1/gin.go:600 (0x767609)
+	(*Engine).ServeHTTP: engine.handleHTTPRequest(c)
+/home/fuzzhead/code/go/some-api/internal/api/handlers/auth_handler_test.go:30 (0x78dcd0)
+	TestProtectedRoutes: r.ServeHTTP(w, req)
+/home/linuxbrew/.linuxbrew/Cellar/go/1.24.4/libexec/src/testing/testing.go:1792 (0x51b373)
+	tRunner: fn(t)
+/home/linuxbrew/.linuxbrew/Cellar/go/1.24.4/libexec/src/runtime/asm_amd64.s:1700 (0x480420)
+	goexit: BYTE	$0x90	// NOP
+
+[GIN] 2025/07/08 - 09:59:16 | 500 |    1.308832ms |                 | GET      "/books"
+    auth_handler_test.go:32: 
+        	Error Trace:	/home/fuzzhead/code/go/some-api/internal/api/handlers/auth_handler_test.go:32
+        	Error:      	Not equal: 
+        	            	expected: 200
+        	            	actual  : 500
+        	Test:       	TestProtectedRoutes
+--- FAIL: TestProtectedRoutes (0.00s)
+=== RUN   TestGetBooks_Unauthorized
+
+
+2025/07/08 09:59:16 [Recovery] 2025/07/08 - 09:59:16 panic recovered:
+runtime error: invalid memory address or nil pointer dereference
+/home/linuxbrew/.linuxbrew/Cellar/go/1.24.4/libexec/src/runtime/panic.go:262 (0x47a698)
+	panicmem: panic(memoryError)
+/home/linuxbrew/.linuxbrew/Cellar/go/1.24.4/libexec/src/runtime/signal_unix.go:925 (0x47a668)
+	sigpanic: panicmem()
+/home/fuzzhead/go/pkg/mod/gorm.io/gorm@v1.30.0/gorm.go:426 (0x6d1012)
+	(*DB).getInstance: if db.clone > 0 {
+/home/fuzzhead/go/pkg/mod/gorm.io/gorm@v1.30.0/chainable_api.go:344 (0x6ce15e)
+	(*DB).Limit: tx = db.getInstance()
+/home/fuzzhead/go/pkg/mod/gorm.io/gorm@v1.30.0/finisher_api.go:121 (0x6cf06b)
+	(*DB).First: tx = db.Limit(1).Order(clause.OrderByColumn{
+/home/fuzzhead/code/go/some-api/internal/api/handlers/book_handler.go:47 (0x78cbdd)
+	GetBook: if err := database.DB.First(&book, "id = ?", id).Error; err != nil {
+/home/fuzzhead/go/pkg/mod/github.com/gin-gonic/gin@v1.10.1/context.go:185 (0x7699ae)
+	(*Context).Next: c.handlers[c.index](c)
+/home/fuzzhead/go/pkg/mod/github.com/gin-gonic/gin@v1.10.1/recovery.go:102 (0x76999b)
+	CustomRecoveryWithWriter.func1: c.Next()
+/home/fuzzhead/go/pkg/mod/github.com/gin-gonic/gin@v1.10.1/context.go:185 (0x768ae4)
+	(*Context).Next: c.handlers[c.index](c)
+/home/fuzzhead/go/pkg/mod/github.com/gin-gonic/gin@v1.10.1/logger.go:249 (0x768acb)
+	LoggerWithConfig.func1: c.Next()
+/home/fuzzhead/go/pkg/mod/github.com/gin-gonic/gin@v1.10.1/context.go:185 (0x767ef1)
+	(*Context).Next: c.handlers[c.index](c)
+/home/fuzzhead/go/pkg/mod/github.com/gin-gonic/gin@v1.10.1/gin.go:644 (0x767980)
+	(*Engine).handleHTTPRequest: c.Next()
+/home/fuzzhead/go/pkg/mod/github.com/gin-gonic/gin@v1.10.1/gin.go:600 (0x767609)
+	(*Engine).ServeHTTP: engine.handleHTTPRequest(c)
+/home/fuzzhead/code/go/some-api/internal/api/handlers/book_handler_test.go:43 (0x78e0ed)
+	TestGetBooks_Unauthorized: router.ServeHTTP(w, req)
+/home/linuxbrew/.linuxbrew/Cellar/go/1.24.4/libexec/src/testing/testing.go:1792 (0x51b373)
+	tRunner: fn(t)
+/home/linuxbrew/.linuxbrew/Cellar/go/1.24.4/libexec/src/runtime/asm_amd64.s:1700 (0x480420)
+	goexit: BYTE	$0x90	// NOP
+
+[GIN] 2025/07/08 - 09:59:16 | 500 |    1.415535ms |                 | GET      "/books"
+    book_handler_test.go:45: 
+        	Error Trace:	/home/fuzzhead/code/go/some-api/internal/api/handlers/book_handler_test.go:45
+        	Error:      	Not equal: 
+        	            	expected: 401
+        	            	actual  : 500
+        	Test:       	TestGetBooks_Unauthorized
+--- FAIL: TestGetBooks_Unauthorized (0.00s)
+=== RUN   TestCreateBook
+2025/07/08 09:59:16 test-key-secret
+[GIN] 2025/07/08 - 09:59:16 | 400 |     129.103µs |                 | POST     "/book"
+    book_handler_test.go:66: 
+        	Error Trace:	/home/fuzzhead/code/go/some-api/internal/api/handlers/book_handler_test.go:66
+        	Error:      	Not equal: 
+        	            	expected: 201
+        	            	actual  : 400
+        	Test:       	TestCreateBook
+--- FAIL: TestCreateBook (0.00s)
+=== RUN   TestGetBooks
+2025/07/08 09:59:16 test-key-secret
+
+
+2025/07/08 09:59:16 [Recovery] 2025/07/08 - 09:59:16 panic recovered:
+runtime error: invalid memory address or nil pointer dereference
+/home/linuxbrew/.linuxbrew/Cellar/go/1.24.4/libexec/src/runtime/panic.go:262 (0x47a698)
+	panicmem: panic(memoryError)
+/home/linuxbrew/.linuxbrew/Cellar/go/1.24.4/libexec/src/runtime/signal_unix.go:925 (0x47a668)
+	sigpanic: panicmem()
+/home/fuzzhead/go/pkg/mod/gorm.io/gorm@v1.30.0/gorm.go:426 (0x6d1012)
+	(*DB).getInstance: if db.clone > 0 {
+/home/fuzzhead/go/pkg/mod/gorm.io/gorm@v1.30.0/finisher_api.go:165 (0x6cf275)
+	(*DB).Find: tx = db.getInstance()
+/home/fuzzhead/code/go/some-api/internal/api/handlers/book_handler.go:37 (0x78c98c)
+	GetBooks: if err := database.DB.Find(&books).Error; err != nil {
+/home/fuzzhead/go/pkg/mod/github.com/gin-gonic/gin@v1.10.1/context.go:185 (0x7647aa)
+	(*Context).Next: c.handlers[c.index](c)
+/home/fuzzhead/code/go/some-api/internal/api/middleware/auth_middleware.go:52 (0x78f498)
+	setupTestRouter.JWTAuthMiddleware.func1: c.Next()
+/home/fuzzhead/go/pkg/mod/github.com/gin-gonic/gin@v1.10.1/context.go:185 (0x7699ae)
+	(*Context).Next: c.handlers[c.index](c)
+/home/fuzzhead/go/pkg/mod/github.com/gin-gonic/gin@v1.10.1/recovery.go:102 (0x76999b)
+	CustomRecoveryWithWriter.func1: c.Next()
+/home/fuzzhead/go/pkg/mod/github.com/gin-gonic/gin@v1.10.1/context.go:185 (0x768ae4)
+	(*Context).Next: c.handlers[c.index](c)
+/home/fuzzhead/go/pkg/mod/github.com/gin-gonic/gin@v1.10.1/logger.go:249 (0x768acb)
+	LoggerWithConfig.func1: c.Next()
+/home/fuzzhead/go/pkg/mod/github.com/gin-gonic/gin@v1.10.1/context.go:185 (0x767ef1)
+	(*Context).Next: c.handlers[c.index](c)
+/home/fuzzhead/go/pkg/mod/github.com/gin-gonic/gin@v1.10.1/gin.go:644 (0x767980)
+	(*Engine).handleHTTPRequest: c.Next()
+/home/fuzzhead/go/pkg/mod/github.com/gin-gonic/gin@v1.10.1/gin.go:600 (0x767609)
+	(*Engine).ServeHTTP: engine.handleHTTPRequest(c)
+/home/fuzzhead/code/go/some-api/internal/api/handlers/book_handler_test.go:77 (0x78e86a)
+	TestGetBooks: r.ServeHTTP(w, req)
+/home/linuxbrew/.linuxbrew/Cellar/go/1.24.4/libexec/src/testing/testing.go:1792 (0x51b373)
+	tRunner: fn(t)
+/home/linuxbrew/.linuxbrew/Cellar/go/1.24.4/libexec/src/runtime/asm_amd64.s:1700 (0x480420)
+	goexit: BYTE	$0x90	// NOP
+
+[GIN] 2025/07/08 - 09:59:16 | 500 |    1.939047ms |                 | GET      "/books"
+    book_handler_test.go:78: 
+        	Error Trace:	/home/fuzzhead/code/go/some-api/internal/api/handlers/book_handler_test.go:78
+        	Error:      	Not equal: 
+        	            	expected: 200
+        	            	actual  : 500
+        	Test:       	TestGetBooks
+--- FAIL: TestGetBooks (0.00s)
+=== RUN   TestGetBook_NotFound
+2025/07/08 09:59:16 test-key-secret
+
+
+2025/07/08 09:59:16 [Recovery] 2025/07/08 - 09:59:16 panic recovered:
+runtime error: invalid memory address or nil pointer dereference
+/home/linuxbrew/.linuxbrew/Cellar/go/1.24.4/libexec/src/runtime/panic.go:262 (0x47a698)
+	panicmem: panic(memoryError)
+/home/linuxbrew/.linuxbrew/Cellar/go/1.24.4/libexec/src/runtime/signal_unix.go:925 (0x47a668)
+	sigpanic: panicmem()
+/home/fuzzhead/go/pkg/mod/gorm.io/gorm@v1.30.0/gorm.go:426 (0x6d1012)
+	(*DB).getInstance: if db.clone > 0 {
+/home/fuzzhead/go/pkg/mod/gorm.io/gorm@v1.30.0/chainable_api.go:344 (0x6ce15e)
+	(*DB).Limit: tx = db.getInstance()
+/home/fuzzhead/go/pkg/mod/gorm.io/gorm@v1.30.0/finisher_api.go:121 (0x6cf06b)
+	(*DB).First: tx = db.Limit(1).Order(clause.OrderByColumn{
+/home/fuzzhead/code/go/some-api/internal/api/handlers/book_handler.go:47 (0x78cbdd)
+	GetBook: if err := database.DB.First(&book, "id = ?", id).Error; err != nil {
+/home/fuzzhead/go/pkg/mod/github.com/gin-gonic/gin@v1.10.1/context.go:185 (0x7647aa)
+	(*Context).Next: c.handlers[c.index](c)
+/home/fuzzhead/code/go/some-api/internal/api/middleware/auth_middleware.go:52 (0x78f7d8)
+	setupTestRouter.JWTAuthMiddleware.func2: c.Next()
+/home/fuzzhead/go/pkg/mod/github.com/gin-gonic/gin@v1.10.1/context.go:185 (0x7699ae)
+	(*Context).Next: c.handlers[c.index](c)
+/home/fuzzhead/go/pkg/mod/github.com/gin-gonic/gin@v1.10.1/recovery.go:102 (0x76999b)
+	CustomRecoveryWithWriter.func1: c.Next()
+/home/fuzzhead/go/pkg/mod/github.com/gin-gonic/gin@v1.10.1/context.go:185 (0x768ae4)
+	(*Context).Next: c.handlers[c.index](c)
+/home/fuzzhead/go/pkg/mod/github.com/gin-gonic/gin@v1.10.1/logger.go:249 (0x768acb)
+	LoggerWithConfig.func1: c.Next()
+/home/fuzzhead/go/pkg/mod/github.com/gin-gonic/gin@v1.10.1/context.go:185 (0x767ef1)
+	(*Context).Next: c.handlers[c.index](c)
+/home/fuzzhead/go/pkg/mod/github.com/gin-gonic/gin@v1.10.1/gin.go:644 (0x767980)
+	(*Engine).handleHTTPRequest: c.Next()
+/home/fuzzhead/go/pkg/mod/github.com/gin-gonic/gin@v1.10.1/gin.go:600 (0x767609)
+	(*Engine).ServeHTTP: engine.handleHTTPRequest(c)
+/home/fuzzhead/code/go/some-api/internal/api/handlers/book_handler_test.go:89 (0x78eb0a)
+	TestGetBook_NotFound: r.ServeHTTP(w, req)
+/home/linuxbrew/.linuxbrew/Cellar/go/1.24.4/libexec/src/testing/testing.go:1792 (0x51b373)
+	tRunner: fn(t)
+/home/linuxbrew/.linuxbrew/Cellar/go/1.24.4/libexec/src/runtime/asm_amd64.s:1700 (0x480420)
+	goexit: BYTE	$0x90	// NOP
+
+[GIN] 2025/07/08 - 09:59:16 | 500 |     891.222µs |                 | GET      "/book/11223344"
+    book_handler_test.go:90: 
+        	Error Trace:	/home/fuzzhead/code/go/some-api/internal/api/handlers/book_handler_test.go:90
+        	Error:      	Not equal: 
+        	            	expected: 404
+        	            	actual  : 500
+        	Test:       	TestGetBook_NotFound
+--- FAIL: TestGetBook_NotFound (0.00s)
+=== RUN   TestUpdateBook_NotFound
+2025/07/08 09:59:16 test-key-secret
+[GIN] 2025/07/08 - 09:59:16 | 400 |      52.601µs |                 | PUT      "/book/11223344"
+    book_handler_test.go:110: 
+        	Error Trace:	/home/fuzzhead/code/go/some-api/internal/api/handlers/book_handler_test.go:110
+        	Error:      	Not equal: 
+        	            	expected: 404
+        	            	actual  : 400
+        	Test:       	TestUpdateBook_NotFound
+--- FAIL: TestUpdateBook_NotFound (0.00s)
+=== RUN   TestDeleteBook_NotFound
+2025/07/08 09:59:16 test-key-secret
+[GIN] 2025/07/08 - 09:59:16 | 400 |      29.201µs |                 | DELETE   "/book/11223344"
+    book_handler_test.go:122: 
+        	Error Trace:	/home/fuzzhead/code/go/some-api/internal/api/handlers/book_handler_test.go:122
+        	Error:      	Not equal: 
+        	            	expected: 500
+        	            	actual  : 400
+        	Test:       	TestDeleteBook_NotFound
+--- FAIL: TestDeleteBook_NotFound (0.00s)
+FAIL
+FAIL	github.com/Fuzz-Head/internal/api/handlers	2.308s
+?   	github.com/Fuzz-Head/internal/api/middleware	[no test files]
+?   	github.com/Fuzz-Head/internal/api/routes	[no test files]
+?   	github.com/Fuzz-Head/pkg/utils	[no test files]
+?   	github.com/Fuzz-Head/test	[no test files]
+FAIL

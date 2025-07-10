@@ -3,7 +3,7 @@ package database
 import (
 	"log"
 
-	"github.com/Fuzz-Head/models"
+	"github.com/Fuzz-Head/domain/models"
 	"github.com/google/uuid"
 )
 
