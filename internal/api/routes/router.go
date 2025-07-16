@@ -11,15 +11,15 @@ func SetupRouter() *gin.Engine {
 
 	r.Use(middleware.InjectClaims())
 
+	authLimiter := middleware.NewRateLimiter("3-M")
+
 	// r.GET("/books", middleware.ScopeRequired("can:read:books"), handlers.GetBooks)
-	// r.GET("/book/:id", middleware.ScopeRequired("can:read:books"), handlers.GetBook)
-	// r.POST("/book", middleware.ScopeRequired("can:create:books"), handlers.CreateBook)
-	// r.PUT("/book/:id", middleware.ScopeRequired("can:update:books"), handlers.UpdateBook)
-	// r.DELETE("/book/:id", middleware.ScopeRequired("can:delete:books"), handlers.DeleteBook)
 
 	// login and register
-	r.POST("/register", handlers.Register)
-	r.POST("/login", handlers.Login)
+	r.POST("/register", authLimiter, handlers.Register)
+	r.POST("/login", authLimiter, handlers.Login)
+	r.POST("/forgot-password", authLimiter, handlers.ForgotPassword)
+	r.POST("/reset-password", authLimiter, handlers.ResetPassword)
 
 	r.POST("/logout", handlers.Logout)
 
@@ -33,6 +33,9 @@ func SetupRouter() *gin.Engine {
 		auth.PUT("/book/:id", middleware.ScopeRequired("can:update:books"), handlers.UpdateBook)
 		auth.DELETE("/book/:id", middleware.ScopeRequired("can:delete:books"), handlers.DeleteBook)
 	}
+
+	// Protect your entire api from abuse - goes in middleware
+	// r.Use(middleware.NewRateLimiter(\"1000-H\")) // 1000 requests per hour per IP
 
 	return r
 }

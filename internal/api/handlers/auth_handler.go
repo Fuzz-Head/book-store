@@ -59,14 +59,14 @@ func Login(c *gin.Context) {
 	}
 
 	var user models.User
-	if err := database.DB.Where("username = ?", input.Email).First(&user).Error; err != nil {
+	if err := database.DB.Where("email = ?", input.Email).First(&user).Error; err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
 	}
 
 	// check if user already logged in
 	if user.RefreshToken != "" {
-		c.JSON(http.StatusForbidden, gin.H{"error": "User already logged in. PLease logout before logging in again."})
+		c.JSON(http.StatusForbidden, gin.H{"error": "User already logged in. Please logout before logging in again."})
 		return
 	}
 
