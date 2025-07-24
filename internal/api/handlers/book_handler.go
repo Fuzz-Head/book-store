@@ -60,6 +60,7 @@ func CreateBook(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	log.Println(input)
 
 	newBook := models.Book{
 		ID:     uuid.New().String(),

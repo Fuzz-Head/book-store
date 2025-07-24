@@ -1,14 +1,15 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"os"
-	"time"
+	"strconv"
 
 	"github.com/Fuzz-Head/database"
 	"github.com/Fuzz-Head/domain/models"
+	"github.com/Fuzz-Head/pkg/jwtutils"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -16,6 +17,7 @@ var jwtKey = []byte(os.Getenv("JWT_SECRET"))
 
 func Register(c *gin.Context) {
 	var input RegisterInput
+	log.Println(input)
 	//var user models.User
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -39,6 +41,7 @@ func Register(c *gin.Context) {
 		Username: input.Username,
 		Email:    input.Email,
 		Password: string(hashedPassword),
+		Role:     input.Role,
 	}
 
 	if err := database.DB.Create(&user).Error; err != nil {
@@ -47,7 +50,6 @@ func Register(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"message": "User registered successfully"})
-
 }
 
 func Login(c *gin.Context) {
@@ -66,8 +68,19 @@ func Login(c *gin.Context) {
 
 	// check if user already logged in
 	if user.RefreshToken != "" {
-		c.JSON(http.StatusForbidden, gin.H{"error": "User already logged in. Please logout before logging in again."})
-		return
+		claims, err := jwtutils.ParseToken(user.RefreshToken)
+		if err == nil && claims.Type == "refresh_token" && claims.UserID == strconv.Itoa(int(user.ID)) {
+			// valid refresh token so issue new access token
+			accessToken, err := jwtutils.GenerateAccessToken(user)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate access token"})
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{
+				"access_token": accessToken,
+			})
+			return
+		}
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)); err != nil {
@@ -75,31 +88,19 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	// token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-	// 	"user_id": user.ID,
-	// 	"role":    user.Role,
-	// 	"exp":     time.Now().Add(time.Hour * 10).Unix(),
-	// })
-
-	// tokenString, err := token.SignedString(jwtKey)
-	// if err != nil {
-	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate token"})
-	// 	return
-	// }
-
-	accessToken, err := generateAccessToken(user)
+	accessToken, err := jwtutils.GenerateAccessToken(user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate access token"})
 		return
 	}
 
-	refreshToken, err := generateRefreshToken(user)
+	refreshToken, err := jwtutils.GenerateRefreshToken(user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate refresh token"})
 		return
 	}
 
-	// saving refresh_token to mark seesion as active
+	// saving refresh_token to mark session as active
 	user.RefreshToken = refreshToken
 	if err := database.DB.Save(&user).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not save refresh token"})
@@ -110,9 +111,6 @@ func Login(c *gin.Context) {
 		"access_token":  accessToken,
 		"refresh_token": refreshToken,
 	})
-
-	// c.JSON(http.StatusOK, gin.H{"token": tokenString})
-
 }
 
 func Logout(c *gin.Context) {
@@ -151,63 +149,44 @@ func RefreshToken(c *gin.Context) {
 		return
 	}
 
-	token, err := jwt.Parse(payload.RefreshToken, func(token *jwt.Token) (interface{}, error) {
-		return jwtKey, nil
-	})
-
-	if err != nil || !token.Valid {
+	claims, err := jwtutils.ParseToken(payload.RefreshToken)
+	if err != nil || claims.Type != "refresh_token" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid refresh token"})
-	}
-
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok || claims["type"] != "refresh" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
 		return
 	}
 
-	userID := uint(claims["user_id"].(float64))
-	// role := claims["role"].(string)
+	userID, err := strconv.Atoi(claims.UserID)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID in token"})
+		return
+	}
 
 	var user models.User
 	if err := database.DB.First(&user, userID).Error; err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User no longer exists"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		return
+	}
+
+	// Check if the stored refresh token matches
+	if user.RefreshToken != payload.RefreshToken {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Refresh token mismatch"})
 		return
 	}
 
 	// Grant new access token
-	newAccessToken, err := generateAccessToken(user)
+	newAccessToken, err := jwtutils.GenerateAccessToken(user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate new acess token"})
 		return
 	}
 
-	newRefreshToken, err := generateRefreshToken(user)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate refresh token"})
-	}
+	// newRefreshToken, err := jwtutils.GenerateRefreshToken(user)
+	// if err != nil {
+	//	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate refresh token"})
+	//}
 
 	c.JSON(http.StatusOK, gin.H{
-		"access_token":  newAccessToken,
-		"refresh_token": newRefreshToken,
+		"access_token": newAccessToken,
+		//"refresh_token": newRefreshToken,
 	})
-
-}
-
-func generateAccessToken(user models.User) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"user_id": user.ID,
-		"role":    user.Role,
-		"exp":     time.Now().Add(60 * time.Minute).Unix(),
-	})
-	return token.SignedString(jwtKey)
-}
-
-func generateRefreshToken(user models.User) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"user_id": user.ID,
-		"role":    user.Role,
-		"type":    "refresh",
-		"exp":     time.Now().Add(7 * 24 * time.Hour).Unix(),
-	})
-	return token.SignedString(jwtKey)
 }

@@ -2,22 +2,12 @@ package middleware
 
 import (
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/Fuzz-Head/domain/models"
+	"github.com/Fuzz-Head/pkg/jwtutils"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 )
-
-var jwtKey = []byte(getJWTSecret())
-
-func getJWTSecret() string {
-	if os.Getenv("ENV") == "test" {
-		return "test-key-secret"
-	}
-	return os.Getenv("JWT_SECRET")
-}
 
 func JWTAuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -29,51 +19,39 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 		}
 
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-		token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
-			// return jwtKey, nil
-			return []byte(getJWTSecret()), nil
-		})
+		claims, err := jwtutils.ParseToken(tokenStr)
 
-		if err != nil || !token.Valid {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		if err != nil || claims.UserID == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
 			c.Abort()
 			return
 		}
 
-		claims := token.Claims.(jwt.MapClaims)
-		role := claims["role"].(string)
-
-		c.Set("userClaims", models.UserClaims{
-			Role:   role,
-			Scopes: scopesForRole(role),
-		})
+		c.Set("userClaims", *claims)
 		c.Next()
 	}
 }
 
-func scopesForRole(role string) []string {
-	switch role {
-	case "admin":
-		return []string{
-			"can:read:books",
-			"can:read:book",
-			"can:create:book",
-			"can:update:book",
-			"can:delete:book",
+func GetClaims(c *gin.Context) (*models.UserClaims, bool) {
+	val, exists := c.Get("userClaims")
+	if !exists {
+		return nil, false // errors.New("user claims not found in context")
+	}
+	claims, ok := val.(models.UserClaims)
+	if !ok {
+		return nil, false //errors.New("invalid user claims type")
+	}
+	return &claims, ok
+}
+
+func RequireAdminRole() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		claims, ok := GetClaims(c)
+		if !ok || claims.Role != "admin" {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Admin access required"})
+			c.Abort()
+			return
 		}
-	case "superUser":
-		return []string{
-			"can:read:books",
-			"can:read:book",
-			"can:create:book",
-			"can:update:book",
-		}
-	case "user":
-		return []string{
-			"can:read:book",
-			"can:read:books",
-		}
-	default:
-		return []string{}
+		c.Next()
 	}
 }

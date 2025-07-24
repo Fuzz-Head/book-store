@@ -16,8 +16,9 @@ func SetupRouter() *gin.Engine {
 	// r.GET("/books", middleware.ScopeRequired("can:read:books"), handlers.GetBooks)
 
 	// login and register
-	r.POST("/register", authLimiter, handlers.Register)
-	r.POST("/login", authLimiter, handlers.Login)
+	r.POST("/register", handlers.Register)
+	r.POST("/login", handlers.Login)
+	r.POST("/refresh", authLimiter, handlers.RefreshToken)
 	r.POST("/forgot-password", authLimiter, handlers.ForgotPassword)
 	r.POST("/reset-password", authLimiter, handlers.ResetPassword)
 
@@ -28,10 +29,26 @@ func SetupRouter() *gin.Engine {
 	auth.Use(middleware.JWTAuthMiddleware())
 	{
 		auth.GET("/books", middleware.ScopeRequired("can:read:books"), handlers.GetBooks)
-		auth.GET("/book/:id", middleware.ScopeRequired("can:read:books"), handlers.GetBook)
-		auth.POST("/book", middleware.ScopeRequired("can:create:books"), handlers.CreateBook)
-		auth.PUT("/book/:id", middleware.ScopeRequired("can:update:books"), handlers.UpdateBook)
-		auth.DELETE("/book/:id", middleware.ScopeRequired("can:delete:books"), handlers.DeleteBook)
+		auth.GET("/book/:id", middleware.ScopeRequired("can:read:book"), handlers.GetBook)
+		auth.POST("/book", middleware.ScopeRequired("can:create:book"), handlers.CreateBook)
+		auth.PUT("/book/:id", middleware.ScopeRequired("can:update:book"), handlers.UpdateBook)
+		auth.DELETE("/book/:id", middleware.ScopeRequired("can:delete:book"), handlers.DeleteBook)
+	}
+
+	user := r.Group("/user")
+	user.Use(middleware.JWTAuthMiddleware())
+	{
+		user.GET("/me", handlers.GetCurrentUser)
+		user.PUT("/:id", handlers.UpdateUser)
+		user.PATCH("/:id/password", handlers.ChangePassword)
+		user.DELETE("/:id", handlers.DeleteUser)
+	}
+
+	admin := user.Group("/")
+	admin.Use(middleware.RequireAdminRole())
+	{
+		admin.GET("/all", handlers.GetAllUsers)
+		admin.PUT("/:id/role", handlers.UpdateUserRole)
 	}
 
 	// Protect your entire api from abuse - goes in middleware

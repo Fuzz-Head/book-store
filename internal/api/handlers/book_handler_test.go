@@ -6,10 +6,14 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strconv"
 	"testing"
+	"time"
 
 	"github.com/Fuzz-Head/database"
+	"github.com/Fuzz-Head/domain/models"
 	"github.com/Fuzz-Head/internal/api/middleware"
+	"github.com/Fuzz-Head/pkg/utils"
 	"github.com/Fuzz-Head/test"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -25,9 +29,6 @@ func setupTestRouter() *gin.Engine {
 
 	r := gin.Default()
 
-	// inject mock claims
-	// r.Use(test.MockAuthMiddleware())
-
 	r.GET("/books", middleware.JWTAuthMiddleware(), GetBooks)
 	r.GET("/book/:id", middleware.JWTAuthMiddleware(), GetBook)
 	r.POST("/book", middleware.JWTAuthMiddleware(), CreateBook)
@@ -37,9 +38,23 @@ func setupTestRouter() *gin.Engine {
 	return r
 }
 
+func seedTestUserWithRole(t *testing.T, role string) models.User {
+	unique := strconv.FormatInt(time.Now().UnixNano(), 10)
+	password, _ := utils.HashPassword("password123")
+
+	user := models.User{
+		Username: "testuser_" + unique,
+		Email:    "test_" + unique + "@example.com",
+		Password: password,
+		Role:     role,
+	}
+
+	err := database.DB.Create(&user).Error
+	assert.NoError(t, err)
+	return user
+}
+
 func TestGetBooks_Unauthorized(t *testing.T) {
-	// router := gin.Default()
-	// router.GET("/books", GetBook)
 	r := setupTestRouter()
 
 	req, _ := http.NewRequest("GET", "/books", nil)
@@ -51,7 +66,9 @@ func TestGetBooks_Unauthorized(t *testing.T) {
 
 func TestCreateBook(t *testing.T) {
 	r := setupTestRouter()
-	token, _ := test.GenerateMockAccessToken(1, "admin")
+	user := seedTestUserWithRole(t, "admin")
+
+	token, _ := test.GenerateMockAccessToken(user.ID, user.Role)
 
 	input := CreateBookInput{
 		Title:  "Test book",
@@ -72,7 +89,9 @@ func TestCreateBook(t *testing.T) {
 
 func TestGetBooks(t *testing.T) {
 	r := setupTestRouter()
-	token, _ := test.GenerateMockAccessToken(1, "admin")
+	user := seedTestUserWithRole(t, "admin")
+
+	token, _ := test.GenerateMockAccessToken(user.ID, user.Role)
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/books", nil)
@@ -84,7 +103,9 @@ func TestGetBooks(t *testing.T) {
 
 func TestGetBook_NotFound(t *testing.T) {
 	r := setupTestRouter()
-	token, _ := test.GenerateMockAccessToken(1, "admin")
+	user := seedTestUserWithRole(t, "admin")
+
+	token, _ := test.GenerateMockAccessToken(user.ID, user.Role)
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/book/"+mockID, nil)
@@ -96,7 +117,9 @@ func TestGetBook_NotFound(t *testing.T) {
 
 func TestUpdateBook_NotFound(t *testing.T) {
 	r := setupTestRouter()
-	token, _ := test.GenerateMockAccessToken(1, "admin")
+	user := seedTestUserWithRole(t, "admin")
+
+	token, _ := test.GenerateMockAccessToken(user.ID, user.Role)
 
 	input := UpdateBookInput{
 		Title:  "Updated Book",
@@ -115,7 +138,9 @@ func TestUpdateBook_NotFound(t *testing.T) {
 
 func TestDeleteBook_NotFound(t *testing.T) {
 	r := setupTestRouter()
-	token, _ := test.GenerateMockAccessToken(1, "admin")
+	user := seedTestUserWithRole(t, "admin")
+
+	token, _ := test.GenerateMockAccessToken(user.ID, user.Role)
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("DELETE", "/book/"+mockID, nil)
@@ -123,5 +148,4 @@ func TestDeleteBook_NotFound(t *testing.T) {
 
 	r.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusNotFound, w.Code)
-
 }
