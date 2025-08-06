@@ -1,12 +1,21 @@
 package routes
 
 import (
+	"io"
+	"log"
+	"os"
+
 	"github.com/Fuzz-Head/internal/api/handlers"
 	"github.com/Fuzz-Head/internal/api/middleware"
 	"github.com/gin-gonic/gin"
 )
 
 func SetupRouter() *gin.Engine {
+	f, err := os.OpenFile("/var/tmp/book-store.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatal(err)
+	}
+	gin.DefaultWriter = io.MultiWriter(f, os.Stdout)
 	r := gin.Default()
 
 	r.Use(middleware.InjectClaims())

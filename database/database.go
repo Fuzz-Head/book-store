@@ -24,11 +24,55 @@ func Connect() {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
+	err = DB.AutoMigrate(&models.Publisher{})
+	if err != nil {
+		log.Fatalf("Failed to migrate publisher database: %v", err)
+	}
+
+	err = DB.AutoMigrate(&models.Category{})
+	if err != nil {
+		log.Fatalf("Failed to migrate category database: %v", err)
+	}
+
+	err = DB.AutoMigrate(&models.Author{})
+	if err != nil {
+		log.Fatalf("Failed to migrate author database: %v", err)
+	}
+
+	err = DB.AutoMigrate(&models.Award{})
+	if err != nil {
+		log.Fatalf("Failed to migrate award database: %v", err)
+	}
+
+	err = DB.AutoMigrate(&models.Series{})
+	if err != nil {
+		log.Fatalf("Failed to migrate series database: %v", err)
+	}
+
+	err = DB.AutoMigrate(&models.Edition{})
+	if err != nil {
+		log.Fatalf("Failed to migrate edition database: %v", err)
+	}
+
+	err = DB.AutoMigrate(&models.BookAuthor{})
+	if err != nil {
+		log.Fatalf("Failed to migrate book-author database: %v", err)
+	}
+
+	err = DB.AutoMigrate(&models.BookAward{})
+	if err != nil {
+		log.Fatalf("Failed to migrate book-award database: %v", err)
+	}
+
+	err = DB.AutoMigrate(&models.Review{})
+	if err != nil {
+		log.Fatalf("Failed to migrate Review database: %v", err)
+	}
+
 	err = DB.AutoMigrate(&models.Book{})
 	if err != nil {
 		log.Fatalf("Failed to migrate book database: %v", err)
 	}
-
 	err = DB.AutoMigrate(&models.User{})
 	if err != nil {
 		log.Fatalf("Failed to migrate user database: %v", err)

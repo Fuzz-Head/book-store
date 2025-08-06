@@ -19,7 +19,16 @@ func main() {
 	}
 	database.Connect()
 
-	database.SeedBooks()
+	//database.AutoMigrate(
+	//	&models.Publisher{},
+	//	&models.Author{},
+	//	&models.Book{},
+	//	&models.Edition{},
+	//	&models.Award{},
+	//)
+
+	//database.SeedBooks()
+	database.SeedCompleteBookData()
 
 	// Register custom ISBN validator
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
