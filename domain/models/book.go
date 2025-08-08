@@ -18,11 +18,16 @@ const (
 
 // Publisher represents book publisher information
 type Publisher struct {
-	ID       string `json:"id" gorm:"primaryKey"`
-	Name     string `json:"name" binding:"required"`
-	Location string `json:"location"`
-	Website  string `json:"website,omitempty"`
-	Founded  *int   `json:"founded,omitempty"` // Year founded
+	ID        string     `json:"id" gorm:"primaryKey"`
+	Name      string     `json:"name" binding:"required"`
+	Location  string     `json:"location"`
+	Website   string     `json:"website,omitempty"`
+	Founded   *int       `json:"founded,omitempty"` // Year founded
+	IsActive  bool       `json:"is_active" grom:"default:true"`
+	DeletedAt *time.Time `json:"deleted_at,omitempty" grom:"index"`
+	DeletedBy *string    `json:"deleted_by,omitempty"`
+	CreatedAt time.Time  `json:"creted_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
 }
 
 // Author represents book author information
@@ -35,15 +40,25 @@ type Author struct {
 	DeathDate   *time.Time `json:"death_date,omitempty"`
 	Nationality string     `json:"nationality,omitempty"`
 	Website     string     `json:"website,omitempty"`
+	IsActive    bool       `json:"is_active" grom:"default:true"`
+	DeletedAt   *time.Time `json:"deleted_at,omitempty" grom:"index"`
+	DeletedBy   *string    `json:"deleted_by,omitempty"`
+	CreatedAt   time.Time  `json:"creted_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
 }
 
 // BookAuthor represents the many-to-many relationship between books and authors
 type BookAuthor struct {
-	BookID   string `json:"book_id" gorm:"primaryKey"`
-	AuthorID string `json:"author_id" gorm:"primaryKey"`
-	Role     string `json:"role"` // "author", "co-author", "editor", "translator", etc.
-	Book     Book   `json:"-" gorm:"foreignKey:BookID"`
-	Author   Author `json:"author" gorm:"foreignKey:AuthorID"`
+	BookID    string     `json:"book_id" gorm:"primaryKey"`
+	AuthorID  string     `json:"author_id" gorm:"primaryKey"`
+	Role      string     `json:"role"` // "author", "co-author", "editor", "translator", etc.
+	Book      Book       `json:"-" gorm:"foreignKey:BookID"`
+	Author    Author     `json:"author" gorm:"foreignKey:AuthorID"`
+	IsActive  bool       `json:"is_active" grom:"default:true"`
+	DeletedAt *time.Time `json:"deleted_at,omitempty" grom:"index"`
+	DeletedBy *string    `json:"deleted_by,omitempty"`
+	CreatedAt time.Time  `json:"creted_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
 }
 
 // Category represents book categories/genres

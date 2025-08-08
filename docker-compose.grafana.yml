@@ -1,0 +1,121 @@
+version: '3'
+
+services:
+
+  postgres:
+    image: postgres:17
+    restart: always
+    environment: 
+      POSTGRES_USER: /run/secrets/postgres_user
+      POSTGRES_PASSWORD: /run/secrets/postgres_password 
+      POSTGRES_DB: /run/secrets/postgres_db
+    secrets:
+      - postgres_user
+      - postgres_password
+      - postgres_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  victoria-metrics:
+    image: victoriametrics/victoria-metrics
+    restart: always
+    ports:
+      - "8428:8428"
+    volumes: 
+      -  victoria-data:/victoria-metrics-data
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    #   command: 
+    #     - "--config.file=/etc/prometheus/prometheus.yml"
+
+  node-exporter:
+    image: prom/node-exporter
+    ports:
+      - "9100:9100"
+
+  influxdb:
+    image: influxdb:1.8
+    restart: always
+    ports:
+      - "8086:8086"
+    environment:
+      INFLUXDB_DB: /run/secrets/influx_db 
+      INFLUXDB_HTTP_AUTH_ENABLED: "false"
+      #/run/secrets/influx_http_auth_enabled
+    secrets:
+      - influx_db
+      #- influx_http_auth_enabled
+    volumes:
+      - influx-data:/var/lib/influxdb
+
+  grafana:
+    image: grafana/grafana:latest
+    ports: 
+      - "3000:3000"
+    depends_on:
+      - influxdb
+      - prometheus
+      - victoria-metrics
+    environment:
+      GF_SECURITY_ADMIN_USER: /run/secrets/gf_security_admin_user
+      GF_SECURITY_ADMIN_PASSWORD: /run/secrets/gf_security_admin_password
+      GF_USERS_ALLOW_SIGN_UP: /run/secrets/gf_users_allow_sign_up
+    secrets:
+      - gf_security_admin_user
+      - gf_security_admin_password
+      - gf_users_allow_sign_up
+    volumes:
+      - grafana-storage:/var/lib/grafana
+
+  loki: 
+    image: grafana/loki:2.9.4
+    ports: 
+        - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes: 
+      - ./loki/loki-config.yaml:/etc/loki/loki-config.yaml
+      - loki-storage:/loki
+
+  promtail:
+    image: grafana/promtail:2.9.4
+    volumes:
+      - ./promtail/promtail-config.yaml:/etc/promtail/promtail-config.yaml
+      - /var/tmp:/var/tmp
+      - /etc/machine-id:/etc/machine-id
+    command: -config.file=/etc/promtail/promtail-config.yaml
+    depends_on:
+      - loki
+
+
+volumes:
+  postgres-data:
+  influx-data:
+  grafana-storage:
+  victoria-data:
+  loki-storage:
+
+secrets:
+  gf_security_admin_user:
+    file: ./gf_security_admin_user
+  gf_security_admin_password:
+    file: ./gf_security_admin_password
+  gf_users_allow_sign_up: 
+    file: ./gf_users_allow_sign_up
+  influx_db: 
+    file: ./influx_db
+  #  influx_http_auth_enabled: 
+    #  file: ./influx_http_auth_enabled
+  postgres_user:
+    file: ./postgres_user
+  postgres_password: 
+    file: ./postgres_password
+  postgres_db: 
+    file: ./postgres_db
+    

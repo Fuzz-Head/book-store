@@ -22,8 +22,6 @@ func SetupRouter() *gin.Engine {
 
 	authLimiter := middleware.NewRateLimiter("3-M")
 
-	// r.GET("/books", middleware.ScopeRequired("can:read:books"), handlers.GetBooks)
-
 	// login and register
 	r.POST("/register", handlers.Register)
 	r.POST("/login", handlers.Login)
@@ -32,6 +30,16 @@ func SetupRouter() *gin.Engine {
 	r.POST("/reset-password", authLimiter, handlers.ResetPassword)
 
 	r.POST("/logout", handlers.Logout)
+
+	r.GET("/authors", middleware.ScopeRequired("can:read:authors"), handlers.GetAuthors)
+	r.POST("/author", middleware.ScopeRequired("can:create:author"), handlers.CreateAuthor)
+	r.GET("/author/:id", middleware.ScopeRequired("can:read:author"), handlers.GetAuthor)
+	r.PUT("/author/:id", middleware.ScopeRequired("can:update:author"), handlers.UpdateAuthor)
+	r.DELETE("/author/:id", middleware.ScopeRequired("can:delete:author"), handlers.DeleteAuthor)
+	r.POST("/author/:id/restore", handlers.ResotreAuthor)
+
+	r.GET("/publishers", handlers.GetPublishers)
+	r.POST("/publisher", handlers.CreatePublisher)
 
 	// JWT protected routes
 	auth := r.Group("/")
