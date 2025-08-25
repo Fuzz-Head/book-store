@@ -5,10 +5,12 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/Fuzz-Head/database"
 	"github.com/Fuzz-Head/domain/models"
 	"github.com/Fuzz-Head/pkg/jwtutils"
+	"github.com/Fuzz-Head/pkg/utils"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -102,7 +104,9 @@ func Login(c *gin.Context) {
 
 	// saving refresh_token to mark session as active
 	user.RefreshToken = refreshToken
-	if err := database.DB.Save(&user).Error; err != nil {
+	if err := utils.StoreRefreshToken(user.ID, user.RefreshToken, 24*time.Hour); err != nil {
+		// No longer needing to save in the database
+		// if err := database.DB.Save(&user).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not save refresh token"})
 		return
 	}
@@ -131,7 +135,8 @@ func Logout(c *gin.Context) {
 
 	// invalidate refresh_token
 	user.RefreshToken = ""
-	if err := database.DB.Save(&user).Error; err != nil {
+	if err := utils.DeleteRefreshToken(user.ID); err != nil {
+		//if err := database.DB.Save(&user).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to logout"})
 		return
 	}
@@ -168,8 +173,13 @@ func RefreshToken(c *gin.Context) {
 	}
 
 	// Check if the stored refresh token matches
-	if user.RefreshToken != payload.RefreshToken {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Refresh token mismatch"})
+	//	if user.RefreshToken != payload.RefreshToken {
+	//		c.JSON(http.StatusUnauthorized, gin.H{"error": "Refresh token mismatch"})
+	//		return
+	//	}
+	storedToken, err := utils.GetRefreshToken(uint(userID))
+	if err != nil || storedToken != payload.RefreshToken {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Refresh token expired or revoked"})
 		return
 	}
 
@@ -179,11 +189,6 @@ func RefreshToken(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate new acess token"})
 		return
 	}
-
-	// newRefreshToken, err := jwtutils.GenerateRefreshToken(user)
-	// if err != nil {
-	//	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate refresh token"})
-	//}
 
 	c.JSON(http.StatusOK, gin.H{
 		"access_token": newAccessToken,

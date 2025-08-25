@@ -1,6 +1,8 @@
 package jwtutils
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"os"
 	"strconv"
@@ -18,6 +20,15 @@ func getJWTSecret() string {
 		return os.Getenv("JWT_SECRET")
 	}
 	return "test-key-secret"
+}
+
+func randomJTI() (string, error) {
+	b := make([]byte, 16)
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
 }
 
 func GenerateAccessToken(user models.User) (string, error) {
